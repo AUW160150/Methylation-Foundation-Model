@@ -1,0 +1,5 @@
+# This file ensures the data/ directory is tracked in git
+# Place your data files in the appropriate subdirectories:
+# - methylation/ for real dbGaP data
+# - raw/ for raw downloads
+# - processed/ for processed datasets (synthetic data will be saved here)

@@ -1,0 +1,358 @@
+# Methylation Foundation Model - Configuration Template
+# ====================================================
+#
+# Copy this file and customize for your specific training setup:
+#   cp config_template.yaml config_production.yaml
+#
+# Then run training with:
+#   python train_production.py --config config_production.yaml
+
+# Model Configuration
+# -------------------
+model:
+  # Base model to fine-tune
+  # Options: NT-500M, NT-2.5B, DNABERT-2, Evo2
+  name: "NT-500M"
+  
+  # Methylation integration method
+  # Options: A (additional features), B (modified tokenization), 
+  #          C (multi-modal), hybrid (task-specific)
+  method: "hybrid"
+  
+  # Parameter-Efficient Fine-Tuning (LoRA)
+  lora:
+    enabled: true
+    rank: 16           # LoRA rank (r)
+    alpha: 32          # LoRA alpha
+    dropout: 0.1       # LoRA dropout
+    target_modules:    # Modules to apply LoRA
+      - "query"
+      - "value"
+
+
+# Training Configuration
+# ----------------------
+training:
+  # Training scale (small, medium, large, xl)
+  scale: "medium"
+  
+  # Number of training epochs
+  epochs: 10
+  
+  # Batch sizes (per device)
+  batch_size:
+    train: 8
+    eval: 16
+  
+  # Gradient accumulation steps
+  gradient_accumulation_steps: 2
+  
+  # Optimization
+  optimizer:
+    type: "adamw"
+    learning_rate: 5.0e-5
+    weight_decay: 0.01
+    adam_epsilon: 1.0e-8
+  
+  # Learning rate scheduler
+  scheduler:
+    type: "linear"
+    warmup_ratio: 0.1
+  
+  # Mixed precision training
+  fp16: true      # Use FP16 (for V100, A100)
+  bf16: false     # Use BF16 (for A100 only)
+  tf32: true      # Enable TF32 (for Ampere GPUs)
+  
+  # Gradient clipping
+  max_grad_norm: 1.0
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 3
+    metric: "eval_loss"
+
+
+# Data Configuration
+# -----------------
+data:
+  # Data directories
+  input_dir: "./data/methylation"
+  output_dir: "./checkpoints"
+  
+  # Training data sources
+  # List of dbGaP studies to include
+  sources:
+    - name: "framingham"
+      accession: "phs000424"
+      path: "./data/methylation/framingham"
+      enabled: true
+    
+    - name: "goldn"
+      accession: "phs000428"
+      path: "./data/methylation/goldn"
+      enabled: true
+    
+    - name: "mesa"
+      accession: "phs000710"
+      path: "./data/methylation/mesa"
+      enabled: false  # Disabled by default
+  
+  # Data splits
+  splits:
+    train: 0.8
+    val: 0.1
+    test: 0.1
+  
+  # Quality filters
+  filters:
+    beta_min: 0.0
+    beta_max: 1.0
+    min_coverage: 10
+    max_missing_rate: 0.1
+  
+  # Sequence context
+  context_window: 512  # Base pairs around CpG site
+  
+  # Data augmentation
+  augmentation:
+    enabled: false
+    methods:
+      - "reverse_complement"
+      - "random_masking"
+  
+  # Batch correction
+  batch_correction:
+    enabled: true
+    method: "combat"  # ComBat for batch effect removal
+
+
+# Evaluation Configuration
+# ------------------------
+evaluation:
+  # Evaluation frequency
+  strategy: "steps"
+  eval_steps: 500
+  
+  # Save checkpoints
+  save_strategy: "steps"
+  save_steps: 500
+  save_total_limit: 5
+  
+  # Best model selection
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_mcc"
+  greater_is_better: true
+  
+  # GUE Benchmark tasks
+  gue_tasks:
+    enabled: true
+    tasks:
+      # Promoter prediction
+      - "prom_core_all"
+      - "prom_tata"
+      - "prom_notata"
+      
+      # Histone modifications
+      - "emp_H3K4me3"
+      - "emp_H3K36me3"
+      - "emp_H3K27me3"
+      - "emp_H3K9me3"
+      
+      # Splice sites
+      - "splice_reconstructed"
+      - "splice_acceptor"
+      - "splice_donor"
+      
+      # TF binding (add as needed)
+      # - "tf_binding_CTCF"
+      # - "tf_binding_GABPA"
+  
+  # Methylation-specific tasks
+  methylation_tasks:
+    enabled: true
+    tasks:
+      - name: "age_prediction"
+        enabled: true
+      - name: "tissue_classification"
+        enabled: true
+      - name: "cancer_detection"
+        enabled: false
+
+
+# Logging Configuration
+# ---------------------
+logging:
+  # Logging directory
+  log_dir: "./logs"
+  
+  # Logging frequency
+  logging_steps: 50
+  
+  # Experiment tracking
+  wandb:
+    enabled: true
+    project: "methylation-foundation-model"
+    entity: null  # Your W&B username/team
+    tags:
+      - "methylation"
+      - "genomics"
+      - "foundation-model"
+  
+  # TensorBoard
+  tensorboard:
+    enabled: true
+  
+  # Console logging
+  verbose: true
+
+
+# Distributed Training Configuration
+# ----------------------------------
+distributed:
+  # Number of GPUs
+  num_gpus: 4
+  
+  # Distributed backend
+  backend: "nccl"  # Use "gloo" for CPU
+  
+  # Find unused parameters (for complex models)
+  find_unused_parameters: false
+  
+  # Gradient checkpointing (saves memory)
+  gradient_checkpointing: false
+
+
+# Hardware Configuration
+# ----------------------
+hardware:
+  # Number of dataloader workers
+  num_workers: 8
+  
+  # Pin memory (faster GPU transfer)
+  pin_memory: true
+  
+  # Device
+  device: "cuda"  # "cuda" or "cpu"
+
+
+# Reproducibility
+# ---------------
+seed: 42
+
+
+# Cloud Configuration (Optional)
+# ------------------------------
+cloud:
+  # Cloud provider (aws, gcp, azure)
+  provider: "aws"
+  
+  # AWS Configuration
+  aws:
+    region: "us-west-2"
+    instance_type: "p4d.24xlarge"
+    spot_instance: true
+    s3_bucket: "your-bucket-name"
+    s3_prefix: "methylation-model"
+  
+  # GCP Configuration
+  gcp:
+    project: "your-project-id"
+    zone: "us-central1-a"
+    machine_type: "a2-ultragpu-8g"
+    preemptible: true
+    gcs_bucket: "your-bucket-name"
+  
+  # Azure Configuration
+  azure:
+    resource_group: "your-resource-group"
+    location: "eastus"
+    vm_size: "Standard_ND96asr_v4"
+    low_priority: true
+    storage_account: "your-storage-account"
+
+
+# Advanced Options
+# ----------------
+advanced:
+  # Compile model (PyTorch 2.0+)
+  compile_model: false
+  
+  # Automatic mixed precision scaler
+  amp_scaler:
+    init_scale: 65536.0
+    growth_factor: 2.0
+    growth_interval: 2000
+  
+  # Memory optimization
+  memory:
+    # Use gradient checkpointing
+    gradient_checkpointing: false
+    
+    # CPU offload (for large models)
+    cpu_offload: false
+    
+    # Activation checkpointing
+    activation_checkpointing: false
+  
+  # Profiling
+  profiling:
+    enabled: false
+    profile_steps: 100
+
+
+# Task-Specific Configurations
+# ----------------------------
+tasks:
+  # Age prediction (epigenetic clock)
+  age_prediction:
+    model_type: "regression"
+    loss: "mse"
+    metric: "mae"
+    cpg_sites_file: "./data/horvath_cpg_sites.txt"
+  
+  # Tissue classification
+  tissue_classification:
+    model_type: "classification"
+    num_classes: 5
+    tissues:
+      - "blood"
+      - "brain"
+      - "liver"
+      - "lung"
+      - "muscle"
+    loss: "cross_entropy"
+    metric: "f1_weighted"
+  
+  # Cancer detection
+  cancer_detection:
+    model_type: "classification"
+    num_classes: 2
+    loss: "binary_cross_entropy"
+    metric: "auc"
+    class_weights:
+      normal: 1.0
+      cancer: 2.0  # Upweight minority class
+
+
+# Notifications (Optional)
+# -------------------------
+notifications:
+  # Slack notifications
+  slack:
+    enabled: false
+    webhook_url: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+    notify_on:
+      - "training_start"
+      - "training_complete"
+      - "error"
+  
+  # Email notifications
+  email:
+    enabled: false
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    from_email: "your-email@gmail.com"
+    to_email: "your-email@gmail.com"
+    password_env_var: "EMAIL_PASSWORD"

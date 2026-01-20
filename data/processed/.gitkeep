@@ -1,0 +1,5 @@
+# Processed training-ready data goes here
+# Note: The simple_foundation_Model_Training.ipynb notebook will automatically
+# generate synthetic data files here when you run Cell 6:
+# - synthetic_methylation.csv (2000 samples)
+# - synthetic_age.csv (1000 samples)

@@ -1,0 +1,5 @@
+# Place real methylation data here (from dbGaP)
+# Example structure:
+# framingham/ - Framingham Heart Study (phs000424)
+# goldn/ - GOLDN Study (phs000428)
+# mesa/ - MESA Study (phs000710)

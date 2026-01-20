@@ -11,18 +11,17 @@ Production-ready pipeline for building and evaluating methylation-aware genomic 
 1. Open [`simple_foundation_Model_Training.ipynb`](simple_foundation_Model_Training.ipynb) in Google Colab
 2. Runtime > Change runtime type > **T4 GPU**
 3. Runtime > **Run all**
-4. ✅ Done! Results in ~20 minutes (synthetic data auto-generated)
 
 **No setup, no data download, no configuration needed!**
 
-📖 [Read the Simple Implementation Guide](DOCUMENTATION_TO_SIMPLE_SCRIPT.md) for details.
+[Read the Simple Implementation Guide](DOCUMENTATION_TO_SIMPLE_SCRIPT.md) for details.
 
 ---
 
 **Need production setup with real data?**
-- 📖 Read [DATA_GUIDE.md](DATA_GUIDE.md) - explains data placement and synthetic vs real data
-- 📖 Read [Production Guide](DOCUMENTATION_TO_PRODUCTION.md) - dbGaP access and cloud deployment
-- 📓 Use `production_methylation_foundation_model.ipynb` with real methylation data
+- Read [DATA_GUIDE.md](DATA_GUIDE.md) - explains data placement and synthetic vs real data
+- Read [Production Guide](DOCUMENTATION_TO_PRODUCTION.md) - dbGaP access and cloud deployment
+- Use `production_methylation_foundation_model.ipynb` with real methylation data
 
 ---
 
